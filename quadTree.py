@@ -25,4 +25,6 @@ class Body:
         return force_x, force_y
 
 
+if __name__ == "__main__":
+    testBody = Body(5,6,7)
 
