@@ -116,8 +116,6 @@ class Area:
         self.max_x = cp.array([maxx])
         self.max_y = cp.array([maxy])
 
-        print(type(self.min_x))
-
 class QuadTree:
     def __init__(self,area,max_depth=256):
         self.area = area
