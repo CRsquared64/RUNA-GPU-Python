@@ -27,4 +27,6 @@ class Body:
 
 if __name__ == "__main__":
     testBody = Body(5,6,7)
-
+    testBody2 = Body(8, 9, 10)
+    force_x, force_y = testBody.force_calculation(testBody2)
+    print(force_x, force_y)
