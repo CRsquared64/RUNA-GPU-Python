@@ -13,7 +13,7 @@ class Body:
 
     def force_calculation(self,obj):
         obj_dist_x = obj.x - self.x
-        obj_dist_y = obj.y = self.y
+        obj_dist_y = obj.y - self.y
 
         dist = (obj_dist_x ** 2 + obj_dist_y ** 2) ** 0.5
         force = (self.G * self.mass * obj.mass) / dist ** 2

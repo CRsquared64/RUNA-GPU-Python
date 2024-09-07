@@ -273,15 +273,10 @@ class QuadTree:
 
 
 if __name__ == "__main__":
-    area = Area(0, 0, 128, 128)
-    tree = QuadTree(area)
-    tree.insert(Body(10, 70))
-    tree.insert(Body(10, 71))
-    tree.insert(Body(70, 80))
-    tree.insert(Body(70, 81))
-    print(tree.root.children[0].children[2].children)
-    print(tree.root.children[0].children[2].children[2].depth)
-
+    testBody = Body(5, 6, 7)
+    testBody2 = Body(8, 9, 10)
+    force_x, force_y = testBody.force_calculation(testBody2)
+    print(force_x, force_y)
 # i thought it wasnt working... turns out im dumb it works fine
 # i was like oh its not drawing all nodes, two or more bodies are in the same quadrant.
 # but yes that shouldhappen, the only reason they dont look seperated is because im not drawing the final level of boxes
