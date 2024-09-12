@@ -4,26 +4,16 @@ class Body:
     G = 0.6
     dt = 1
     THRESH = 0.7
-    def __init__(self,x,y,mass=1):
-        self.x = cp.array([x])
-        self.y = cp.array([y])
+
+    def __init__(self, x, y, mass=10):
+        self.x = cp.array([x], dtype=cp.float64)  # Ensure float64 type
+        self.y = cp.array([y], dtype=cp.float64)  # Ensure float64 type
         self.mass = mass
-        self.xv = cp.array([0.0])
-        self.yv = cp.array([0.0])
+        self.xv = cp.array([0.0], dtype=cp.float64)  # Ensure float64 type
+        self.yv = cp.array([0.0], dtype=cp.float64)  # Ensure float64 type
 
-    def force_calculation(self, obj):
-        obj_dist_x = obj.x - self.x
-        obj_dist_y = obj.y - self.y
-
-        dist = cp.sqrt(obj_dist_x ** 2 + obj_dist_y ** 2)
-        force = (self.G * self.mass * obj.mass) / dist ** 2
-        angle = cp.arctan2(obj_dist_y, obj_dist_x)
-
-        force_x = cp.cos(angle) * force
-        force_y = cp.sin(angle) * force
-
-        return force_x, force_y
-
+        self.radius = 1
+        self.depth = 1
     def node_check(self, node):
         s = node.max_x - node.min_x
         distance_x = self.x - node.x
@@ -33,32 +23,6 @@ class Body:
         return s_d
 
 
-    def update_position(self, bodies):
-        total_fx = cp.array([0.0])
-        total_fy = cp.array([0.0])
-
-        total_impulse_x = cp.array([0.0])
-        total_impulse_y = cp.array([0.0])
-        for body in bodies:
-            if body == self:
-                continue
-            fx, fy = self.force_calculation(body)
-            if isinstance(body, Body):
-                impulse_x, impulse_y = self.collide(body)
-                total_impulse_x += impulse_x * body.mass
-                total_impulse_y += impulse_y * body.mass
-
-            total_fx += fx
-            total_fy += fy
-
-        self.xv += total_fx / self.mass * self.dt
-        self.yv += total_fy / self.mass * self.dt
-
-        self.xv -= total_impulse_x
-        self.yv -= total_impulse_y
-
-        self.x += self.xv * self.dt
-        self.y += self.yv * self.dt
 
 class Node:
     def __init__(self, minx, miny, maxx, maxy, depth=0):
@@ -75,12 +39,11 @@ class Node:
         self.update_child_area()
         self.depth = depth
 
-
     def update_center_mass(self):
-        count = cp.array([0])
-        mass = 0
-        x = cp.array([0])
-        y = cp.array([0])
+        count = cp.array([0], dtype=cp.float64)  # Use float for count if averaging
+        mass = 0.0  # Or cp.array([0.0], dtype=cp.float64)
+        x = cp.array([0.0], dtype=cp.float64)
+        y = cp.array([0.0], dtype=cp.float64)
 
         for child in self.children:
             if child is not None:
@@ -89,6 +52,7 @@ class Node:
                 mass += child.mass
                 count += 1
                 child.depth = self.depth
+
         if count != 0:
             x = x / count
             y = y / count
