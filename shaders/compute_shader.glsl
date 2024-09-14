@@ -1,7 +1,6 @@
 #version 430
 
-#define EPSILON 0.01
-
+#define EPSILON 1
 layout (local_size_x = 512) in;
 
 struct Particle {

@@ -2,8 +2,12 @@ import moderngl_window as mglw
 import moderngl
 import numpy as np
 import time
+from pyrr import Matrix44
 
-WIDTH, HEIGHT = 1920// 2, 1080 //2
+# Create an orthographic projection matrix
+
+
+WIDTH, HEIGHT = 800,800
 
 
 class Runa(mglw.WindowConfig):
@@ -32,9 +36,12 @@ class Runa(mglw.WindowConfig):
         ])
 
         # Random initial positions and velocities
-        self.particle_data['position'][:, :3] = np.random.uniform(-1.0, 1.0, (self.n, 3))
+        self.particle_data['position'][:, :2] = np.random.uniform(-1.0, 1.0, (self.n, 2))
+        self.particle_data['position'][:, 2] = 0
         self.particle_data['position'][:, 3] = 1.0
         self.particle_data['velocity'][:, :3] = [0, 0, 0]
+
+
 
         # Create buffers
         self.particle_buffer = self.ctx.buffer(self.particle_data.tobytes())
@@ -50,6 +57,9 @@ class Runa(mglw.WindowConfig):
             self.render_program,
             [(self.particle_buffer, '4f', 'in_position')],
         )
+        projection = Matrix44.orthogonal_projection(left=-1.0, right=1.0, bottom=-1.0, top=1.0, near=-1.0, far=1.0,
+                                                    dtype='f4')
+        self.render_program['projection'].write(projection)
 
     def update_particles(self):
         # Bind the time step and particle count uniforms
@@ -62,7 +72,8 @@ class Runa(mglw.WindowConfig):
         self.compute_shader.run(num_workgroups, 1, 1)
 
     def render(self, time: float, frame_time: float):
-        self.ctx.clear(0.1, 0.1, 0.1)
+        self.ctx.viewport = (0, 0, self.window_size[0], self.window_size[1])
+        self.ctx.clear(0, 0, 0)
 
         # Update particle positions using the compute shader
         self.update_particles()
@@ -72,5 +83,7 @@ class Runa(mglw.WindowConfig):
 
 
 
+
 if __name__ == '__main__':
+
     mglw.run_window_config(Runa)
