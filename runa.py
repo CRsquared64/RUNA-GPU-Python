@@ -1,33 +1,76 @@
 import moderngl_window as mglw
-from moderngl_window.geometry import quad_fs
+import moderngl
+import numpy as np
 import time
 
-WIDTH, HEIGHT = 1920, 1080
-k = 0.001
+WIDTH, HEIGHT = 1920// 2, 1080 //2
 
 
 class Runa(mglw.WindowConfig):
     resource_dir = "shaders"  # built in prefix, how neat is that??
-    window_size = WIDTH, HEIGHT
+    window_size = WIDTH, HEIGHT  # same with windows, so convienent
+    gl_version = (4, 3)
+    title = "N-Body Simulation"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.quad = quad_fs() # basically a screen
-        self.prog = self.load_program(vertex_shader='vertex_shader.glsl',
-                                      fragment_shader='fragment_shader.glsl')
+        self.ctx = moderngl.create_context()
 
-        self.set_uniform('res', self.window_size)
-        self.set_uniform("k", k)
-    def set_uniform(self, name, value):
-        try:
-            self.prog[name] = value
-        except KeyError:
-            print(f"{name} - not in shader")
+        # simulation parameters
+        self.n = int(5e4)  # number of bodies
+        self.dt = 10
+        self.g = 6e-11
+
+
+
+        self.compute_shader = self.load_compute_shader("compute_shader.glsl")
+
+        # Initialize particle data (positions, velocities)
+        self.particle_data = np.zeros(self.n, dtype=[
+            ('position', np.float32, 4),  # xyz = position, w = mass
+            ('velocity', np.float32, 4),  # xyz = velocity, w = padding
+        ])
+
+        # Random initial positions and velocities
+        self.particle_data['position'][:, :3] = np.random.uniform(-1.0, 1.0, (self.n, 3))
+        self.particle_data['position'][:, 3] = 1.0
+        self.particle_data['velocity'][:, :3] = [0, 0, 0]
+
+        # Create buffers
+        self.particle_buffer = self.ctx.buffer(self.particle_data.tobytes())
+        self.particle_buffer.bind_to_storage_buffer(0)
+
+        self.render_program = self.ctx.program(
+            vertex_shader=open(self.resource_dir + '/vertex_shader.glsl').read(),
+            fragment_shader=open(self.resource_dir + '/fragment_shader.glsl').read(),
+        )
+
+        # Create the vertex array object (VAO) for rendering
+        self.vao = self.ctx.vertex_array(
+            self.render_program,
+            [(self.particle_buffer, '4f', 'in_position')],
+        )
+
+    def update_particles(self):
+        # Bind the time step and particle count uniforms
+        self.compute_shader['dt'].value = self.dt
+        self.compute_shader['num_particles'].value = self.n
+        self.compute_shader["G"].value = self.g
+
+        # Dispatch the compute shader
+        num_workgroups = (self.n + 512) // 512  # 256 is the local size in compute shader
+        self.compute_shader.run(num_workgroups, 1, 1)
+
     def render(self, time: float, frame_time: float):
-        self.set_uniform("time", time)
-        self.ctx.clear()
-        self.quad.render(self.prog)
+        self.ctx.clear(0.1, 0.1, 0.1)
 
-if __name__ == "__main__":
+        # Update particle positions using the compute shader
+        self.update_particles()
+
+        # Render particles using the vertex array
+        self.vao.render(mode=moderngl.POINTS)
+
+
+
+if __name__ == '__main__':
     mglw.run_window_config(Runa)
-
