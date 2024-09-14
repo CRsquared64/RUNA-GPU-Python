@@ -6,8 +6,7 @@ import numpy as np
 import math
 from pyrr import Matrix44
 
-
-WIDTH, HEIGHT = 1920,1080
+WIDTH, HEIGHT = 1920, 1080
 
 
 class Runa(mglw.WindowConfig):
@@ -21,11 +20,9 @@ class Runa(mglw.WindowConfig):
         self.ctx = moderngl.create_context()
 
         # simulation parameters
-        self.n = int(5e4)  # number of bodies
+        self.n = int(7e4)  # number of bodies
         self.dt = 10
         self.g = 6e-11
-
-
 
         self.compute_shader = self.load_compute_shader("compute_shader.glsl")
 
@@ -35,18 +32,9 @@ class Runa(mglw.WindowConfig):
             ('velocity', np.float32, 4),  # xyz = velocity, w = padding
         ])
 
-
-        # Random initial positions and velocities
-        '''
-        self.particle_data['position'][:, :2] = np.random.uniform(-1.0, 1.0, (self.n, 2))
-        self.particle_data['position'][:, 2] = 0
-        self.particle_data['position'][:, 3] = 1.0
-        '''
-        pos, vel = self.spiral_galaxy()
-        self.particle_data['position'][:,:4] = pos
+        pos, vel = self.square() # options are square, circle
+        self.particle_data['position'][:, :4] = pos
         self.particle_data['velocity'][:, :3] = vel
-
-
 
         # Create buffers
         self.particle_buffer = self.ctx.buffer(self.particle_data.tobytes())
@@ -57,7 +45,6 @@ class Runa(mglw.WindowConfig):
             fragment_shader=open(self.resource_dir + '/fragment_shader.glsl').read(),
         )
 
-        # Create the vertex array object (VAO) for rendering
         self.vao = self.ctx.vertex_array(
             self.render_program,
             [(self.particle_buffer, '4f', 'in_position')],
@@ -79,7 +66,16 @@ class Runa(mglw.WindowConfig):
         self.update_particles()
         self.vao.render(mode=moderngl.POINTS)
 
-    def spiral_galaxy(self):
+    def square(self):
+        pos = np.random.uniform(-1.0, 1.0, (self.n, 3))
+        mass = np.ones((self.n, 1))
+        pos = np.hstack((pos, mass))
+
+        vel = [0, 0, 0]
+
+        return pos, vel
+
+    def circle(self):
         pos = []
         vel = []
         for i in range(self.n):
@@ -91,21 +87,15 @@ class Runa(mglw.WindowConfig):
             z = 0
             mass = 1
 
-            pos.append([x,y,z,mass])
+            pos.append([x, y, z, mass])
 
             xv = math.cos(angle + math.pi / 2) * distance / 1000
             yv = math.sin(angle + math.pi / 2) * distance / 1000
             zv = 0
 
-            vel.append([xv,yv,zv])
+            vel.append([xv, yv, zv])
         return np.array(pos), np.array(vel)
 
 
-
-
-
-
-
 if __name__ == '__main__':
-
     mglw.run_window_config(Runa)
