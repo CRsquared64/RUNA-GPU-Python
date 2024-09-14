@@ -1,13 +1,13 @@
+import random
+
 import moderngl_window as mglw
 import moderngl
 import numpy as np
-import time
+import math
 from pyrr import Matrix44
 
-# Create an orthographic projection matrix
 
-
-WIDTH, HEIGHT = 800,800
+WIDTH, HEIGHT = 1920,1080
 
 
 class Runa(mglw.WindowConfig):
@@ -35,11 +35,16 @@ class Runa(mglw.WindowConfig):
             ('velocity', np.float32, 4),  # xyz = velocity, w = padding
         ])
 
+
         # Random initial positions and velocities
+        '''
         self.particle_data['position'][:, :2] = np.random.uniform(-1.0, 1.0, (self.n, 2))
         self.particle_data['position'][:, 2] = 0
         self.particle_data['position'][:, 3] = 1.0
-        self.particle_data['velocity'][:, :3] = [0, 0, 0]
+        '''
+        pos, vel = self.spiral_galaxy()
+        self.particle_data['position'][:,:4] = pos
+        self.particle_data['velocity'][:, :3] = vel
 
 
 
@@ -62,24 +67,41 @@ class Runa(mglw.WindowConfig):
         self.render_program['projection'].write(projection)
 
     def update_particles(self):
-        # Bind the time step and particle count uniforms
         self.compute_shader['dt'].value = self.dt
         self.compute_shader['num_particles'].value = self.n
         self.compute_shader["G"].value = self.g
-
-        # Dispatch the compute shader
-        num_workgroups = (self.n + 512) // 512  # 256 is the local size in compute shader
+        num_workgroups = (self.n + 512) // 512  #
         self.compute_shader.run(num_workgroups, 1, 1)
 
     def render(self, time: float, frame_time: float):
         self.ctx.viewport = (0, 0, self.window_size[0], self.window_size[1])
         self.ctx.clear(0, 0, 0)
-
-        # Update particle positions using the compute shader
         self.update_particles()
-
-        # Render particles using the vertex array
         self.vao.render(mode=moderngl.POINTS)
+
+    def spiral_galaxy(self):
+        pos = []
+        vel = []
+        for i in range(self.n):
+            angle = random.random() * math.pi * 2
+            distance = random.random()
+
+            x = math.cos(angle) * distance
+            y = math.sin(angle) * distance
+            z = 0
+            mass = 1
+
+            pos.append([x,y,z,mass])
+
+            xv = math.cos(angle + math.pi / 2) * distance / 1000
+            yv = math.sin(angle + math.pi / 2) * distance / 1000
+            zv = 0
+
+            vel.append([xv,yv,zv])
+        return np.array(pos), np.array(vel)
+
+
+
 
 
 
