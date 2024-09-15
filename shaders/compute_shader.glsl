@@ -1,11 +1,10 @@
 #version 430
 
-#define EPSILON 1
 layout (local_size_x = 512) in;
 
 struct Particle {
-    vec4 position;
-    vec4 velocity;
+    vec4 position;  // xyz = position, w = mass
+    vec4 velocity;  // xyz = velocity
 };
 
 layout (std430, binding = 0) buffer Particles {
@@ -15,6 +14,7 @@ layout (std430, binding = 0) buffer Particles {
 uniform float dt;
 uniform int num_particles;
 uniform float G;
+float min_distance = 1;
 
 void main() {
     uint i = gl_GlobalInvocationID.x;
@@ -29,8 +29,10 @@ void main() {
 
         vec3 pos_j = particles[j].position.xyz;
         vec3 diff = pos_j - pos_i;
-        float dist = length(diff) + EPSILON;
-        float force_mag = (G / (dist * dist)) * particles[j].position.w; // Mass in .w
+        float dist = length(diff);
+        float dist2 = dot(diff, diff);
+        float softening = min_distance * min_distance;
+        float force_mag = (G * particles[j].position.w * 2) / (dist2 + softening);
         force += normalize(diff) * force_mag;
     }
 
