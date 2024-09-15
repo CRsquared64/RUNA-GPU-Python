@@ -20,25 +20,24 @@ class Runa(mglw.WindowConfig):
         self.ctx = moderngl.create_context()
 
         # simulation parameters
-        self.n = int(50**2)  # number of bodies
+        self.n = int(300 ** 2)  # number of bodies
         self.dt = 0.01
         self.g = 0.00001
 
         self.compute_shader = self.load_compute_shader("compute_shader.glsl")
 
-        # Initialize particle data (positions, velocities)
-        self.particle_data = np.zeros(self.n, dtype=[
-            ('position', np.float32, 4),  # xyz = position, w = mass
-            ('velocity', np.float32, 4),  # xyz = velocity, w = padding
-        ])
+        self.position_data = np.zeros((self.n, 4))
+        self.velocity_data = np.zeros((self.n, 4))
 
-        pos, vel = self.uniform_square() # options are square, circle
-        self.particle_data['position'][:, :4] = pos
-        self.particle_data['velocity'][:, :3] = vel
+        pos, vel = self.square()  # options are square, circle
+        self.position_data[:] = pos
+        self.velocity_data[:] = vel
 
-        # Create buffers
-        self.particle_buffer = self.ctx.buffer(self.particle_data.tobytes())
-        self.particle_buffer.bind_to_storage_buffer(0)
+        self.position_buffer = self.ctx.buffer(self.position_data.tobytes())
+        self.velocity_buffer = self.ctx.buffer(self.velocity_data.tobytes())
+
+        self.position_buffer.bind_to_storage_buffer(0)
+        self.velocity_buffer.bind_to_storage_buffer(1)
 
         self.render_program = self.ctx.program(
             vertex_shader=open(self.resource_dir + '/vertex_shader.glsl').read(),
@@ -47,12 +46,12 @@ class Runa(mglw.WindowConfig):
 
         self.vao = self.ctx.vertex_array(
             self.render_program,
-            [(self.particle_buffer, '4f', 'in_position')],
+            [(self.position_buffer, '4f', 'in_position')]
         )
         projection = Matrix44.orthogonal_projection(left=-1.0, right=1.0, bottom=-1.0, top=1.0, near=-1.0, far=1.0,
                                                     dtype='f4')
         self.render_program['projection'].write(projection)
-        print("Particle Data Size:", len(self.particle_data))
+        print("Particle Data Size:", len(self.position_data))
 
     def update_particles(self):
         self.compute_shader['dt'].value = self.dt
@@ -66,6 +65,7 @@ class Runa(mglw.WindowConfig):
         self.ctx.clear(0, 0, 0)
         self.update_particles()
         self.vao.render(mode=moderngl.POINTS)
+
     def uniform_square(self):
         r = int(math.sqrt(self.n))
         pos = []
@@ -80,25 +80,26 @@ class Runa(mglw.WindowConfig):
                 mass = 1
                 pos.append([x, y, z, mass])
 
-        vel = np.zeros((self.n, 3))
+        vel = np.zeros((self.n, 4))
         return np.array(pos), vel
+
     def square(self):
 
         pos = np.random.uniform(-1.0, 1.0, (self.n, 2))
-        z = np.zeros((self.n,1))
+        z = np.zeros((self.n, 1))
         pos = np.hstack((pos, z))
 
         mass = np.ones((self.n, 1))
         pos = np.hstack((pos, mass))
 
-        vel = [0, 0, 0]
+        vel = [0, 0, 0, 0]
 
         return pos, vel
 
     def circle(self):
-        min_dist =  0.05
-        pos = [[0,0,0,10000]]
-        vel = [[0,0,0]]
+        min_dist = 0.05
+        pos = [[0, 0, 0, 10000]]
+        vel = [[0, 0, 0]]
         for i in range(self.n - 1):
             angle = random.random() * math.pi * 2
             distance = random.random() + min_dist
@@ -114,10 +115,8 @@ class Runa(mglw.WindowConfig):
             yv = math.sin(angle + math.pi / 2) * distance / 10000
             zv = 0
 
-            vel.append([xv, yv, zv])
+            vel.append([xv, yv, zv,0])
         return np.array(pos), np.array(vel)
-
-
 
 
 if __name__ == '__main__':
