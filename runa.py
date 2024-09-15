@@ -26,10 +26,10 @@ class Runa(mglw.WindowConfig):
 
         self.compute_shader = self.load_compute_shader("compute_shader.glsl")
 
-        self.position_data = np.zeros((self.n, 4))
-        self.velocity_data = np.zeros((self.n, 4))
+        self.position_data = np.zeros((self.n, 4), dtype=np.float32)
+        self.velocity_data = np.zeros((self.n, 4), dtype=np.float32)
 
-        pos, vel = self.square()  # options are square, circle
+        pos, vel = self.uniform_square()  # options are square, circle
         self.position_data[:] = pos
         self.velocity_data[:] = vel
 
@@ -92,7 +92,7 @@ class Runa(mglw.WindowConfig):
         mass = np.ones((self.n, 1))
         pos = np.hstack((pos, mass))
 
-        vel = [0, 0, 0, 0]
+        vel = np.zeros((self.n,4))
 
         return pos, vel
 
