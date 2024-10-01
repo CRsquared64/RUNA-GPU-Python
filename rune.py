@@ -6,7 +6,7 @@ import numpy as np
 import math
 from pyrr import Matrix44
 
-WIDTH, HEIGHT = 800, 800
+WIDTH, HEIGHT = 1080, 1080
 
 
 class Runa(mglw.WindowConfig):
@@ -20,9 +20,10 @@ class Runa(mglw.WindowConfig):
         self.ctx = moderngl.create_context()
 
         # simulation parameters
-        self.n = int(400 ** 2)  # number of bodies
-        self.dt = 2
-        self.g = 6.67e-10
+        self.n = int(300 ** 2)  # number of bodies
+        self.dt = 0.01
+        self.g = 0.00001
+
         self.compute_shader = self.load_compute_shader("compute_shader.glsl")
 
         self.position_data = np.zeros((self.n, 4), dtype=np.float32)
@@ -34,7 +35,6 @@ class Runa(mglw.WindowConfig):
 
         self.position_buffer = self.ctx.buffer(self.position_data.tobytes())
         self.velocity_buffer = self.ctx.buffer(self.velocity_data.tobytes())
-
 
         self.position_buffer.bind_to_storage_buffer(0)
         self.velocity_buffer.bind_to_storage_buffer(1)
@@ -48,7 +48,7 @@ class Runa(mglw.WindowConfig):
             self.render_program,
             [(self.position_buffer, '4f', 'in_position')]
         )
-        projection = Matrix44.orthogonal_projection(left=-4, right=4, bottom=-4, top=4, near=-1.0, far=1.0,
+        projection = Matrix44.orthogonal_projection(left=-1.0, right=1.0, bottom=-1.0, top=1.0, near=-1.0, far=1.0,
                                                     dtype='f4')
         self.render_program['projection'].write(projection)
         print("Particle Data Size:", len(self.position_data))
@@ -57,7 +57,6 @@ class Runa(mglw.WindowConfig):
         self.compute_shader['dt'].value = self.dt
         self.compute_shader['num_particles'].value = self.n
         self.compute_shader["G"].value = self.g
-        self.compute_shader["min_distance"].value = 0.5
         num_workgroups = (self.n + 512) // 512  #
         self.compute_shader.run(num_workgroups, 1, 1)
 
@@ -97,29 +96,14 @@ class Runa(mglw.WindowConfig):
 
         return pos, vel
 
-    def rotation_square(self):
-        pos = [[0,0,0,10000]]
-        vel = [[0,0,0,0]]
-        for i in range(self.n - 1):
-            x = random.uniform(-0.5,0.5)
-            y = random.uniform(-0.5, 0.5)
-            z = 0
-            mass = 1
-            xv = (y-0.1) * 0.003
-            yv = -(x-0.1) * 0.003
-            zv = 0
-            pos.append([x,y,z,mass])
-            vel.append([xv,yv,zv,0])
-        return np.array(pos), np.array(vel)
-
-
     def circle(self):
-        min_dist = 0.04
+        min_dist = 0.05
         pos = [[0, 0, 0, 10000]]
-        vel = [[0, 0, 0,0]]
+        vel = [[0, 0, 0]]
         for i in range(self.n - 1):
             angle = random.random() * math.pi * 2
             distance = random.random() + min_dist
+
             x = math.cos(angle) * distance
             y = math.sin(angle) * distance
             z = 0
@@ -127,14 +111,12 @@ class Runa(mglw.WindowConfig):
 
             pos.append([x, y, z, mass])
 
-            xv = math.cos(angle + math.pi / 2) * 0.00001#* distance *0.8
-            yv = math.sin(angle + math.pi / 2) * 0.00001 #* distance * 0.8
+            xv = math.cos(angle + math.pi / 2) * distance / 10000
+            yv = math.sin(angle + math.pi / 2) * distance / 10000
             zv = 0
 
             vel.append([xv, yv, zv,0])
         return np.array(pos), np.array(vel)
-
-
 
 
 if __name__ == '__main__':
