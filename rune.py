@@ -6,7 +6,7 @@ import numpy as np
 import math
 from pyrr import Matrix44
 
-WIDTH, HEIGHT = 1080, 1080
+
 
 
 class Runa(mglw.WindowConfig):
@@ -15,7 +15,7 @@ class Runa(mglw.WindowConfig):
     gl_version = (4, 3)
     title = "N-Body Simulation"
 
-    def __init__(self, **kwargs):
+    def __init__(self, pos,vel, **kwargs):
         super().__init__(**kwargs)
         self.ctx = moderngl.create_context()
 
@@ -28,8 +28,7 @@ class Runa(mglw.WindowConfig):
 
         self.position_data = np.zeros((self.n, 4), dtype=np.float32)
         self.velocity_data = np.zeros((self.n, 4), dtype=np.float32)
-
-        pos, vel = self.uniform_square()  # options are square, circle
+ # options are square, circle
         self.position_data[:] = pos
         self.velocity_data[:] = vel
 
@@ -66,58 +65,9 @@ class Runa(mglw.WindowConfig):
         self.update_particles()
         self.vao.render(mode=moderngl.POINTS)
 
-    def uniform_square(self):
-        r = int(math.sqrt(self.n))
-        pos = []
 
-        scale_factor = 2 / (r - 1)
-
-        for i in range(r):
-            for j in range(r):
-                x = i * scale_factor - 1
-                y = j * scale_factor - 1
-                z = 0
-                mass = 1
-                pos.append([x, y, z, mass])
-
-        vel = np.zeros((self.n, 4))
-        return np.array(pos), vel
-
-    def square(self):
-
-        pos = np.random.uniform(-1.0, 1.0, (self.n, 2))
-        z = np.zeros((self.n, 1))
-        pos = np.hstack((pos, z))
-
-        mass = np.ones((self.n, 1))
-        pos = np.hstack((pos, mass))
-
-        vel = np.zeros((self.n,4))
-
-        return pos, vel
-
-    def circle(self):
-        min_dist = 0.05
-        pos = [[0, 0, 0, 10000]]
-        vel = [[0, 0, 0]]
-        for i in range(self.n - 1):
-            angle = random.random() * math.pi * 2
-            distance = random.random() + min_dist
-
-            x = math.cos(angle) * distance
-            y = math.sin(angle) * distance
-            z = 0
-            mass = 1
-
-            pos.append([x, y, z, mass])
-
-            xv = math.cos(angle + math.pi / 2) * distance / 10000
-            yv = math.sin(angle + math.pi / 2) * distance / 10000
-            zv = 0
-
-            vel.append([xv, yv, zv,0])
-        return np.array(pos), np.array(vel)
 
 
 if __name__ == '__main__':
     mglw.run_window_config(Runa)
+

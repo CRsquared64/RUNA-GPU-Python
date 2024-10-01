@@ -1,10 +1,10 @@
 import tkinter as tk
-from tkmacosx import Button # macos getaround for colours
+from tkmacosx import Button# macos getaround for colours
+from tkinter import messagebox
+import simulations
+import random
 width = 600
 height = 800
-
-
-
 
 class RuneGUI:
     def __init__(self, WIDTH, HEIGHT):
@@ -23,6 +23,8 @@ class RuneGUI:
 
 
         ]
+        self.clicked = 0
+
     def load_theme(self,theme):
         with open(f"themes/{theme}.theme", "r") as file:
             self.theme_data = eval(file.read())
@@ -40,57 +42,110 @@ class RuneGUI:
         label.config(text=clicked.get())
 
     def screen_setup(self):
-        brun = Button(self.root, text="Run Simulation", bg = self.button_col, fg=self.text_col, highlightbackground = self.hover_col, highlightthickness=0.1)
-        brun.place(x =300,y = 775,anchor = tk.CENTER)
+        self.brun = Button(self.root, text="Run Simulation(s)", bg = self.button_col, fg=self.text_col, highlightbackground = self.hover_col, highlightthickness=0.1, command=self.get_settings)
+        self.brun.place(x =300,y = 775,anchor = tk.CENTER)
 
-        clicked = tk.StringVar()
-        clicked.set("Select Simulation")
+        self.clicked = tk.StringVar()
+        self.clicked.set("Select Simulation")
 
-        dropdown = tk.OptionMenu(self.root, clicked,*self.options)
-        dropdown.configure(background=self.button_col, activebackground=self.button_col)
-        dropdown.place(x =300,y = 25,anchor = tk.CENTER)
+        self.dropdown = tk.OptionMenu(self.root, self.clicked,*self.options)
+        self.dropdown.configure(background=self.button_col, activebackground=self.button_col)
+        self.dropdown.place(x =300,y = 25,anchor = tk.CENTER)
 
-        simulation_label = tk.Label(self.root, text="Selected Simulation: ", fg = self.text_col, bg =self.button_col)
-        simulation_label.place(x =150,y = 25,anchor = tk.CENTER)
+        self.simulation_label = tk.Label(self.root, text="Selected Simulation: ", fg = self.text_col, bg =self.button_col)
+        self.simulation_label.place(x =150,y = 25,anchor = tk.CENTER)
 
-        n_label = tk.Label(self.root, text="Amount N: ", fg=self.text_col, bg=self.button_col)
-        n_label.place(x=180, y=50, anchor=tk.CENTER)
+        self.n_label = tk.Label(self.root, text="Amount N: ", fg=self.text_col, bg=self.button_col)
+        self.n_label.place(x=180, y=75, anchor=tk.CENTER)
 
-        n_text = tk.Entry(self.root, bg=self.button_col)
-        n_text.place(x = 300, y = 50, anchor = tk.CENTER, width = 150, height = 25)
+        self.n_text = tk.Entry(self.root, bg=self.button_col)
+        self.n_text.place(x = 300, y = 75, anchor = tk.CENTER, width = 150, height = 25)
 
-        dt_lable = tk.Label(self.root, text="Timestep (dt): ", fg=self.text_col, bg=self.button_col)
-        dt_lable.place(x=170, y=75, anchor=tk.CENTER)
+        self.dt_lable = tk.Label(self.root, text="Timestep (dt): ", fg=self.text_col, bg=self.button_col)
+        self.dt_lable.place(x=170, y=100, anchor=tk.CENTER)
 
-        dt_text = tk.Entry(self.root, bg=self.button_col)
-        dt_text.place(x=300, y=75, anchor=tk.CENTER, width=150, height=25)
+        self.dt_text = tk.Entry(self.root, bg=self.button_col)
+        self.dt_text.place(x=300, y=100, anchor=tk.CENTER, width=150, height=25)
 
-        g_lable = tk.Label(self.root, text="Gravity (G): ", fg=self.text_col, bg=self.button_col)
-        g_lable.place(x=180, y=100, anchor=tk.CENTER)
+        self.g_lable = tk.Label(self.root, text="Gravity (G): ", fg=self.text_col, bg=self.button_col)
+        self.g_lable.place(x=180, y=125, anchor=tk.CENTER)
 
-        g_text = tk.Entry(self.root, bg=self.button_col)
-        g_text.place(x=300, y=100, anchor=tk.CENTER, width=150, height=25)
+        self.g_text = tk.Entry(self.root, bg=self.button_col)
+        self.g_text.place(x=300, y=125, anchor=tk.CENTER, width=150, height=25)
 
-        min_dist_lable = tk.Label(self.root, text="Min Distance (Default 1): ", fg=self.text_col, bg=self.button_col)
-        min_dist_lable.place(x=140, y=150, anchor=tk.CENTER)
+        self.min_dist_lable = tk.Label(self.root, text="Min Distance (Default 1): ", fg=self.text_col, bg=self.button_col)
+        self.min_dist_lable.place(x=140, y=175, anchor=tk.CENTER)
 
-        min_dist_lable = tk.Entry(self.root, bg=self.button_col)
-        min_dist_lable.place(x=300, y=150, anchor=tk.CENTER, width=150, height=25)
+        self.min_dist_text = tk.Entry(self.root, bg=self.button_col)
+        self.min_dist_text.place(x=300, y=175, anchor=tk.CENTER, width=150, height=25)
 
-        bgen = Button(self.root, text="Generate Positions", bg=self.button_col, fg=self.text_col,
-                      highlightbackground=self.hover_col, highlightthickness=0.1)
-        bgen.place(x=300, y=300, anchor=tk.CENTER)
+        self.bgen = Button(self.root, text="Generate Positions", bg=self.button_col, fg=self.text_col,
+                      highlightbackground=self.hover_col, highlightthickness=0.1, command=self.position_get)
+        self.bgen.place(x=300, y=300, anchor=tk.CENTER)
 
-        position_area = tk.Frame(self.root ,bg = "black", highlightbackground=self.hover_col, highlightthickness=1)
-        position_area.place(x = 300, y = 500, anchor=tk.CENTER, width = 300, height = 300 )
+        # self.position_area = tk.Frame(self.root ,bg = "black", highlightbackground=self.hover_col, highlightthickness=1)
+        # self.position_area.place(x = 300, y = 500, anchor=tk.CENTER, width = 300, height = 300 )
 
-        bqueue = Button(self.root, text="Add To Queue", bg=self.button_col, fg=self.text_col,
+        self.canvas = tk.Canvas(self.root, width=300, height=300, bg= "black", highlightbackground=self.hover_col, highlightthickness=1)
+        self.canvas.place(x=300, y=500, anchor=tk.CENTER)
+
+        self.bqueue = Button(self.root, text="Add To Queue", bg=self.button_col, fg=self.text_col,
                       highlightbackground=self.green_col, highlightthickness=0.1)
-        bqueue.place(x=300, y=700, anchor=tk.CENTER)
+        self.bqueue.place(x=300, y=700, anchor=tk.CENTER)
 
-        bremove = Button(self.root, text="Remove From Queue", bg=self.button_col, fg=self.text_col,
+        self.bremove = Button(self.root, text="Remove From Queue", bg=self.button_col, fg=self.text_col,
                         highlightbackground=self.red_col, highlightthickness=0.1)
-        bremove.place(x=300, y=730, anchor=tk.CENTER)
+        self.bremove.place(x=300, y=730, anchor=tk.CENTER)
+
+    def get_settings(self):
+        sim = self.clicked.get() if self.clicked.get() != "Select Simulation" else None
+        n = self.n_text.get() if self.n_text.get() != "" and self.float_val(self.n_text.get()) else None
+        dt = self.dt_text.get() if self.dt_text.get() != "" and self.float_val(self.dt_text.get()) else None
+        g = self.g_text.get() if self.g_text.get() != "" and self.float_val(self.g_text.get()) else None
+        min_dist = self.min_dist_text.get() if self.min_dist_text.get() != "" and self.float_val(self.min_dist_text.get()) else None
+        vals = [["sim", sim],["n", n],["dt",dt],["g",g],["min_Dist", min_dist]]
+        for val in vals:
+            if val[1] == None:
+                messagebox.showerror("Missing Value", f"Error, Incorrect Value at {val[0]}")
+
+    def float_val(self, var):
+        return isinstance(var, float)
+
+    def position_get(self):
+        """
+            "Square Random",
+            "Square Uniform",
+            "Circle"
+        """
+        sim = self.clicked.get() if self.clicked.get() != "Select Simulation" else None
+        n = int(self.n_text.get()) if self.n_text.get() != "" else None
+        vals = [["sim", sim], ["n", n]]
+        for val in vals:
+            if val[1] == None:
+                messagebox.showerror("Missing Value", f"Error, Incorrect Value at {val[0]}")
+        if sim == "Square Random":
+            pos,vel = simulations.square(n)
+        elif sim == "Square Uniform":
+            pos, vel = simulations.uniform_square(n)
+        elif sim == "Circle":
+            pos,vel = simulations.circle(n)
+        else:
+            messagebox.showerror("WTF","how did you do that")
+
+        self.position_draw(pos)
+
+    def position_draw(self, pos):
+        self.canvas.delete("all")
+        draw_num = 1
+        for position in pos:
+            ran_n = random.randint(1, 1)
+            if ran_n == draw_num:
+                x = (position[0] * 150) + 150
+                y = (position[1] * 150) + 150
+
+                self.canvas.create_rectangle(x,y,x + 2, y + 2, fill="WHITE")
+            else:
+                pass
 
     def __call__(self, *args, **kwargs):
         self.load_theme("darkMode")
@@ -107,3 +162,5 @@ def linear(arr, ell):
             return True
 
 
+# data is from -1 to 1 x and y
+# position is 1,1 top left
