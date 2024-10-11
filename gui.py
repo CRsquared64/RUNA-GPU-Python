@@ -1,17 +1,19 @@
 import tkinter as tk
 from tkmacosx import Button# macos getaround for colours
 from tkinter import messagebox
+from tkinter.simpledialog import askinteger
 import simulations
 from matplotlib import pyplot as plt
 import numpy as np
 import os
 from PIL import Image, ImageTk
 from tqdm import tqdm
+
 width = 600
 height = 800
 
 class RuneGUI:
-    def __init__(self, WIDTH, HEIGHT):
+    def __init__(self, WIDTH, HEIGHT, queue):
         self.root = tk.Tk()
 
         self.root.geometry(f"{WIDTH}x{HEIGHT}")
@@ -28,6 +30,9 @@ class RuneGUI:
 
         ]
         self.clicked = 0
+
+        self.current_pos = None
+        self.pos_queue = queue
 
     def load_theme(self,theme):
         with open(f"themes/{theme}.theme", "r") as file:
@@ -94,13 +99,16 @@ class RuneGUI:
         self.canvas.place(x=300, y=500, anchor=tk.CENTER)
 
         self.bqueue = Button(self.root, text="Add To Queue", bg=self.button_col, fg=self.text_col,
-                      highlightbackground=self.green_col, highlightthickness=0.1)
+                      highlightbackground=self.green_col, highlightthickness=0.1,command=self.add_queue)
         self.bqueue.place(x=300, y=700, anchor=tk.CENTER)
 
         self.bremove = Button(self.root, text="Remove From Queue", bg=self.button_col, fg=self.text_col,
                         highlightbackground=self.red_col, highlightthickness=0.1)
         self.bremove.place(x=300, y=730, anchor=tk.CENTER)
 
+        self.view_queue = Button(self.root, text="View Queue", bg = self.button_col, fg = self.text_col,
+                                 highlightbackground=self.red_col, highlightthickness=0.1, command=self.show_and_select_queue)
+        self.view_queue.place(x=300,y=250, anchor=tk.CENTER)
 
     def get_settings(self):
         sim = self.clicked.get() if self.clicked.get() != "Select Simulation" else None
@@ -113,6 +121,25 @@ class RuneGUI:
             if val[1] == None:
                 messagebox.showerror("Missing Value", f"Error, Incorrect Value at {val[0]}")
 
+    def add_queue(self):
+        if self.current_pos is not None:
+            self.pos_queue.enqueue([self.current_pos, self.clicked.get(), self.n_text.get()])
+        else:
+            messagebox.showerror("No Positions", "No positions loaded avalible to be queued")
+    def remove_queue(self):
+        if self.current_pos is not None and self.pos_queue.in_queue(self.current_pos):
+            self.pos_queue.dequeue(self.current_pos)
+        else:
+            messagebox.showerror("Error", "Select Positions Actually in queue")
+
+    def show_and_select_queue(self):
+        queue_data = self.pos_queue.return_full()
+        print(queue_data)
+        text = ""
+        for val in queue_data:
+            text += f"{val[0]}: {val[1]}  [n={val[2]}]\n"
+
+        get_queue_value = askinteger(title="Select Queue Item", prompt =text, minvalue=1, maxvalue=len(queue_data))
     def float_val(self, var):
         return isinstance(var, float)
 
@@ -136,8 +163,9 @@ class RuneGUI:
             pos,vel = simulations.circle(n)
         else:
             messagebox.showerror("WTF","how did you do that")
-
+        self.current_pos = pos
         self.position_draw(pos)
+
 
     def position_draw(self, pos):
         x_arr = []
