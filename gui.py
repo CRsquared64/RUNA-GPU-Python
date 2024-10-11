@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import os
 from PIL import Image, ImageTk
+from tqdm import tqdm
 width = 600
 height = 800
 
@@ -145,11 +146,13 @@ class RuneGUI:
         ax = plt.Axes(fig, [0., 0., 1., 1.])
         ax.set_axis_off()
         fig.add_axes(ax)
-        for position in pos:
-            x = (position[0] * 150) + 150
-            y = (position[1] * 150) + 150
-            x_arr.append(x)
-            y_arr.append(y)
+        with tqdm(total=len(pos)) as pbar:
+            for position in pos:
+                x = (position[0] * 150) + 150
+                y = (position[1] * 150) + 150
+                x_arr.append(x)
+                y_arr.append(y)
+                pbar.update(1)
         x = np.array(x_arr)
         y = np.array(y_arr)
         plt.scatter(x,y,s=1,color='white')
@@ -158,7 +161,6 @@ class RuneGUI:
         print("Generated Figure")
 
         if os.path.isfile("cache/figure.png"):
-            print("yeah")
             global image
             image = ImageTk.PhotoImage(Image.open("cache/figure.png"))
             self.image = tk.Label(self.root, image = image,bg= "black", highlightbackground=self.hover_col, highlightthickness=1)
