@@ -82,11 +82,11 @@ class RuneGUI:
         self.g_text = tk.Entry(self.root, bg=self.button_col)
         self.g_text.place(x=300, y=125, anchor=tk.CENTER, width=150, height=25)
 
-        self.min_dist_lable = tk.Label(self.root, text="Min Distance (Default 1): ", fg=self.text_col, bg=self.button_col)
-        self.min_dist_lable.place(x=140, y=175, anchor=tk.CENTER)
+        self.soft_lable = tk.Label(self.root, text="Softening Value (Default 0): ", fg=self.text_col, bg=self.button_col)
+        self.soft_lable.place(x=130, y=175, anchor=tk.CENTER)
 
-        self.min_dist_text = tk.Entry(self.root, bg=self.button_col)
-        self.min_dist_text.place(x=300, y=175, anchor=tk.CENTER, width=150, height=25)
+        self.softing_text = tk.Entry(self.root, bg=self.button_col)
+        self.softing_text.place(x=300, y=175, anchor=tk.CENTER, width=150, height=25)
 
         self.bgen = Button(self.root, text="Generate Positions", bg=self.button_col, fg=self.text_col,
                       highlightbackground=self.hover_col, highlightthickness=0.1, command=self.position_get)
@@ -103,7 +103,7 @@ class RuneGUI:
         self.bqueue.place(x=300, y=700, anchor=tk.CENTER)
 
         self.bremove = Button(self.root, text="Remove From Queue", bg=self.button_col, fg=self.text_col,
-                        highlightbackground=self.red_col, highlightthickness=0.1)
+                        highlightbackground=self.red_col, highlightthickness=0.1, command=self.remove_queue)
         self.bremove.place(x=300, y=730, anchor=tk.CENTER)
 
         self.view_queue = Button(self.root, text="View Queue", bg = self.button_col, fg = self.text_col,
@@ -115,11 +115,17 @@ class RuneGUI:
         n = self.n_text.get() if self.n_text.get() != "" and self.float_val(self.n_text.get()) else None
         dt = self.dt_text.get() if self.dt_text.get() != "" and self.float_val(self.dt_text.get()) else None
         g = self.g_text.get() if self.g_text.get() != "" and self.float_val(self.g_text.get()) else None
-        min_dist = self.min_dist_text.get() if self.min_dist_text.get() != "" and self.float_val(self.min_dist_text.get()) else None
-        vals = [["sim", sim],["n", n],["dt",dt],["g",g],["min_Dist", min_dist]]
+        softening = self.softing_text.get() if self.softing_text.get() != "" and self.float_val(self.softing_text.get()) else None
+        vals = [["sim", sim],["n", n],["dt",dt],["g",g],["softening", softening]]
+        err = 0
         for val in vals:
             if val[1] == None:
                 messagebox.showerror("Missing Value", f"Error, Incorrect Value at {val[0]}")
+                err += 1
+        if err > 0:
+            messagebox.showerror(title="Errors",message=f"{err} Errors detected, please fix and try again" )
+        else:
+            pass # send data off for simulation
 
     def add_queue(self):
         if self.current_pos is not None:
@@ -127,6 +133,7 @@ class RuneGUI:
         else:
             messagebox.showerror("No Positions", "No positions loaded avalible to be queued")
     def remove_queue(self):
+        print("Removing")
         if self.current_pos is not None and self.pos_queue.in_queue(self.current_pos):
             self.pos_queue.dequeue(self.current_pos)
         else:
@@ -140,6 +147,7 @@ class RuneGUI:
             text += f"{val[0]}: {val[1]}  [n={val[2]}]\n"
 
         get_queue_value = askinteger(title="Select Queue Item", prompt =text, minvalue=1, maxvalue=len(queue_data))
+        self.current_pos = self.pos_queue.queue[get_queue_value - 1][0]
     def float_val(self, var):
         return isinstance(var, float)
 
@@ -204,12 +212,6 @@ class RuneGUI:
 if __name__ == "__main__":
     runeGui = RuneGUI(width,height)
     runeGui()
-
-def linear(arr, ell):
-    for element in arr:
-        if element == ell:
-            return True
-
 
 # data is from -1 to 1 x and y
 # position is 1,1 top left
