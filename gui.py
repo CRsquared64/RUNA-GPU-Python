@@ -2,7 +2,10 @@ import tkinter as tk
 from tkmacosx import Button# macos getaround for colours
 from tkinter import messagebox
 import simulations
-import random
+from matplotlib import pyplot as plt
+import numpy as np
+import os
+from PIL import Image, ImageTk
 width = 600
 height = 800
 
@@ -97,6 +100,7 @@ class RuneGUI:
                         highlightbackground=self.red_col, highlightthickness=0.1)
         self.bremove.place(x=300, y=730, anchor=tk.CENTER)
 
+
     def get_settings(self):
         sim = self.clicked.get() if self.clicked.get() != "Select Simulation" else None
         n = self.n_text.get() if self.n_text.get() != "" and self.float_val(self.n_text.get()) else None
@@ -135,17 +139,32 @@ class RuneGUI:
         self.position_draw(pos)
 
     def position_draw(self, pos):
-        self.canvas.delete("all")
-        draw_num = 1
+        x_arr = []
+        y_arr = []
+        fig = plt.figure(frameon=False,figsize=(3,3))
+        ax = plt.Axes(fig, [0., 0., 1., 1.])
+        ax.set_axis_off()
+        fig.add_axes(ax)
         for position in pos:
-            ran_n = random.randint(1, 1)
-            if ran_n == draw_num:
-                x = (position[0] * 150) + 150
-                y = (position[1] * 150) + 150
+            x = (position[0] * 150) + 150
+            y = (position[1] * 150) + 150
+            x_arr.append(x)
+            y_arr.append(y)
+        x = np.array(x_arr)
+        y = np.array(y_arr)
+        plt.scatter(x,y,s=1,color='white')
+        plt.gca().set_facecolor("black")
+        fig.savefig("cache/figure.png")
+        print("Generated Figure")
 
-                self.canvas.create_rectangle(x,y,x + 2, y + 2, fill="WHITE")
-            else:
-                pass
+        if os.path.isfile("cache/figure.png"):
+            print("yeah")
+            global image
+            image = ImageTk.PhotoImage(Image.open("cache/figure.png"))
+            self.image = tk.Label(self.root, image = image,bg= "black", highlightbackground=self.hover_col, highlightthickness=1)
+            self.image.place(x=300,y=500,anchor=tk.CENTER)
+        # (x * 150) + 150
+
 
     def __call__(self, *args, **kwargs):
         self.load_theme("darkMode")
