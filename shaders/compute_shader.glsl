@@ -18,7 +18,7 @@ layout (std430, binding = 1) buffer VelocityBuffer {
 uniform float dt;
 uniform int num_particles;
 uniform float G;
-float min_distance =0.2;
+float min_distance =0;
 
 void main() {
     uint i = gl_GlobalInvocationID.x;
@@ -36,14 +36,18 @@ void main() {
         vec3 diff = pos_j - pos_i;
         float dist = length(diff);
         float dist2 = dot(diff, diff);
-        float softening = min_distance * min_distance;
+        float softening = min_distance * min_distance * 20;
         float force_mag = (G * positions[j].w * 2.0) / (dist2 + softening);
+        if (abs(force_mag) > 0.0000001) force_mag *= 0.000001;
         force += normalize(diff) * force_mag;
+
     }
 
     vec3 new_velocity = vel_i + force * dt;
     vec3 new_position = pos_i + new_velocity * dt;
 
     velocities[i].xyz = new_velocity;
+
     positions[i].xyz = new_position;
 }
+

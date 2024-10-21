@@ -6,18 +6,18 @@ out vec4 fragColor;
 
 void main() {
     // Calculate the velocity magnitude (speed)
-    float speed = length(velocity) * 15;
+    float speed = length(velocity) * 0.0005;
 
     // Define base colors: blue for slow, white for medium, red for fast
-    vec3 blue = vec3(0.8, 0.8, 1.0);  // Slow (blue)
-    vec3 white = vec3(1.0, 1.0, 1.0);  // Medium speed (white)
-    vec3 red = vec3(1.0, 0.7, 0.7);  // Fast (red)
+    vec4 blue = vec4(0.8, 0.8, 1,0.1);  // Slow (blue)
+    vec4 white = vec4(1.0, 1.0, 1.0,1.0);  // Medium speed (white)
+    vec4 red = vec4(1.0, 0.8, 0.8,1.0);  // Fast (red)
 
     // Map speed to a range between 0 and 1
     float normalizedSpeed = clamp(speed * 10.0, 0.0, 1.0);
 
     // Blend between blue and white for slower speeds
-    vec3 color = mix(blue, white, normalizedSpeed);
+    vec4 color = mix(blue, white, normalizedSpeed);
 
     // For faster speeds, blend between white and red
     if (normalizedSpeed > 0.5) {
@@ -25,5 +25,5 @@ void main() {
     }
 
     // Set the final color
-    fragColor = vec4(color, 1.0);  // Alpha is 1.0 for fully opaque
+    fragColor = vec4(color);  // Alpha is 1.0 for fully opaque
 }
