@@ -1,12 +1,13 @@
-import random
+import os
+import sys
 
-import moderngl_window as mglw
+import cv2
 import moderngl
+import moderngl_window as mglw
 import numpy as np
-import math
 from pyrr import Matrix44
 
-WIDTH, HEIGHT = 800, 800
+WIDTH, HEIGHT = 1920, 1080
 
 
 class Runa(mglw.WindowConfig):
@@ -15,21 +16,25 @@ class Runa(mglw.WindowConfig):
     gl_version = (4, 3)
     title = "N-Body Simulation"
 
-    def __init__(self, **kwargs):
+    def __init__(self, pos, vel, g, n, dt, rendered=False, max_frame_time=0, **kwargs):
         super().__init__(**kwargs)
         self.ctx = moderngl.create_context()
 
         # simulation parameters
-        self.n = int(250 ** 2)  # number of bodies
-        self.dt = 10
-        self.g = 6E-11
+        self.n = n  # number of bodies
+        self.dt = dt
+        self.g = g
 
-        self.compute_shader = self.load_compute_shader("compute_shader.glsl")
+        self.render_factor_w = 2  # aspect ratio simplified
+        self.render_factor_h = 9 / 8
+
+        self.rendered = rendered
+
+        self.compute_shader = self.load_compute_shader("soft_compute_shader.glsl")
 
         self.position_data = np.zeros((self.n, 4), dtype=np.float32)
         self.velocity_data = np.zeros((self.n, 4), dtype=np.float32)
-
-        pos, vel = self.square()  # options are square, circle
+        # options are square, circle
         self.position_data[:] = pos
         self.velocity_data[:] = vel
 
@@ -52,10 +57,24 @@ class Runa(mglw.WindowConfig):
             ]
         )
 
-        projection = Matrix44.orthogonal_projection(left=-1, right=1, bottom=-1, top=1, near=-1.0, far=1.0,
+        projection = Matrix44.orthogonal_projection(left=-self.render_factor_w, right=self.render_factor_w,
+                                                    bottom=-self.render_factor_h, top=self.render_factor_h, near=-1.0,
+                                                    far=1.0,
                                                     dtype='f4')
         self.render_program['projection'].write(projection)
         print("Particle Data Size:", len(self.position_data))
+
+        self.cache_dir = "cache"
+        os.makedirs(self.cache_dir, exist_ok=True)  # Create cache dir if it doesn't exist
+        if rendered:
+            self.frame_count = 0  # To track frame numbers
+
+            # Track time to close after 30 seconds
+            self.total_time = 0
+            self.max_time = max_frame_time  # seconds
+
+        else:
+            pass
 
     def update_particles(self):
         self.compute_shader['dt'].value = self.dt
@@ -65,127 +84,68 @@ class Runa(mglw.WindowConfig):
         num_workgroups = (self.n + 512) // 512  #
         self.compute_shader.run(num_workgroups, 1, 1)
 
-    def render(self, time: float, frame_time: float):
+    def realtime_render(self, time: float, frame_time: float):
+        """
+        renders in realtime
+
+        """
         self.ctx.viewport = (0, 0, self.window_size[0], self.window_size[1])
         self.ctx.clear(0, 0, 0)
         self.update_particles()
         self.vao.render(mode=moderngl.POINTS)
 
-    def uniform_square(self):
-        r = int(math.sqrt(self.n))
-        pos = []
+    def render_to_png(self, time: float, frame_time: float):
+        self.total_time += frame_time
+        if self.total_time >= self.max_time:
+            print("30 seconds passed. Closing application.")
+            self.close()
+            return
 
-        scale_factor = (2 / (r - 1))
+        self.ctx.viewport = (0, 0, self.window_size[0], self.window_size[1])
+        self.ctx.clear(0, 0, 0)
+        self.update_particles()
+        self.vao.render(mode=moderngl.POINTS)
 
-        for i in range(r):
-            for j in range(r):
-                x = i * scale_factor - 1
-                y = j * scale_factor - 1
-                z = 0
-                mass = 1
-                pos.append([x, y, z, mass])
+        # Capture frame and save as PNG in cache directory
+        frame = self.ctx.screen.read(components=3)  # Read RGB pixels
+        frame = np.frombuffer(frame, dtype=np.uint8).reshape((HEIGHT, WIDTH, 3))
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert RGB to BGR for OpenCV
 
-        vel = np.zeros((self.n, 4))
-        return np.array(pos), vel
+        # Save frame as PNG
+        frame_filename = os.path.join(self.cache_dir, f"frame_{self.frame_count:05d}.jpg")
+        cv2.imwrite(frame_filename, frame)
+        self.frame_count += 1
 
-    def random(self):
-        pos = []
-        vel = []
-        for i in range(self.n):
-            x = random.uniform(-WIDTH, WIDTH)
-            y = random.uniform(-HEIGHT,HEIGHT)
-            z = 0
-            mass = 1
-            xv = 0
-            yv = 0
-            zv = 0
-            padding = 1
-            pos.append([x,y,z,mass])
-            vel.append([xv,yv,zv,padding])
-        return np.array(pos), np.array(vel)
+    def png_to_vid(self):
+        print("Creating video from PNG frames (lossless)...")
 
+        video_filename = "nbody_simulation.avi"
+        fourcc = cv2.VideoWriter_fourcc(*'FFV1')  #
+        video = cv2.VideoWriter(video_filename, fourcc, 30.0, (WIDTH, HEIGHT))
 
-    def square(self):
+        # Read all frame files and write them to the video
+        for i in range(self.frame_count):
+            frame_filename = os.path.join(self.cache_dir, f"frame_{i:05d}.jpg")
+            frame = cv2.imread(frame_filename)
+            video.write(frame)
 
-        pos = np.random.uniform(-1, 1, (self.n, 2))
-        z = np.zeros((self.n, 1))
-        pos = np.hstack((pos, z))
+        video.release()  # Finalize and save the video
+        print(f"Lossless video saved as {video_filename}")
 
-        mass = np.ones((self.n, 1))
-        pos = np.hstack((pos, mass))
+        super().close()
 
-        vel = np.zeros((self.n,4))
+        sys.exit()
 
-        return pos, vel
+    def render(self, time: float, frame_time: float):
+        """
+        MGLW looks for a function called render to be ran to hence render the simulation, so we have one render function
+        which calls upon either realtime or rendered render to render the render. render.
+        """
+        if self.rendered:
+            self.render_to_png(time, frame_time)
+        else:
+            self.realtime_render(time, frame_time)
 
-    def circle(self):
-        min_dist = 0.025
-        pos = [[0, 0, 0, 1000]]
-        vel = [[0, 0, 0,0]]
-        for i in range(self.n - 1):
-            angle = random.random() * math.pi * 2
-            distance = (random.random()) * 0.6 + min_dist
-
-            x = math.cos(angle) * distance * 1
-            y = math.sin(angle) * distance * 1
-            z = 0
-            mass = 1
-
-            pos.append([x, y, z, mass])
-
-            xv = math.cos(angle + math.pi / 2) * distance * 0.01
-            yv = math.sin(angle + math.pi / 2) * distance * 0.01
-            zv = 0
-
-            vel.append([xv, yv, zv,0])
-        return np.array(pos), np.array(vel)
-
-    def spiral(self):
-        arm_separation = np.pi
-        noise_std = 0.1
-        a  = 0.1
-        b = 0.3
-        n_arm_points = self.n // 2  # Points per arm
-        theta = np.linspace(0, 4 * np.pi, n_arm_points)  # Angle range for one arm
-
-        # Spiral equation for radius
-        r = a + b * theta  # r = a + b * theta
-
-        # First arm
-        x1 = r * np.cos(theta)
-        y1 = r * np.sin(theta)
-
-        # Second arm (shifted by `arm_separation`)
-        x2 = r * np.cos(theta + arm_separation)
-        y2 = r * np.sin(theta + arm_separation)
-
-        # Combine both arms
-        x = np.concatenate([x1, x2])
-        y = np.concatenate([y1, y2])
-
-        x += np.random.normal(0, noise_std, size=x.shape)
-        y += np.random.normal(0, noise_std, size=y.shape)
-        # Normalize x and y to the range [-1, 1]
-
-
-        # Create z values (all 0) and mass values (all 1)
-        z = np.zeros_like(x)
-        mass = np.ones_like(x)
-
-        distance = np.sqrt(x ** 2 + y ** 2)  # Radial distance in 2D
-        angle = np.arctan2(y, x)  # Angle in 2D (from x-axis)
-
-        # Compute velocity components (rotated by 90 degrees)
-        xv = np.cos(angle + np.pi / 2) * distance * 3
-        yv = np.sin(angle + np.pi / 2) * distance * 3
-        zv = np.zeros_like(xv)  # Since all motion is in the xy-plane
-        p  = np.ones_like(xv)
-
-        vel = np.column_stack([xv,yv,zv,p])
-
-        # Stack the results into a (n_points, 4) array
-        galaxy = np.column_stack([x, y, z, mass])
-        return galaxy, vel
 
 if __name__ == '__main__':
     mglw.run_window_config(Runa)
