@@ -21,3 +21,8 @@ class Queue:
         for i in range(len(self.queue)):
             arr.append([i + 1, self.queue[i][1], self.queue[i][2]])
         return arr
+
+    def is_empty(self):
+        if len(self.queue) == 0:
+            return True
+        return False

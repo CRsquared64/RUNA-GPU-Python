@@ -139,7 +139,7 @@ class Runa(mglw.WindowConfig):
     def render(self, time: float, frame_time: float):
         """
         MGLW looks for a function called render to be ran to hence render the simulation, so we have one render function
-        which calls upon either realtime or rendered render to render the render. render.
+        which calls upon either realtime render or rendered render to render the render. render.
         """
         if self.rendered:
             self.render_to_png(time, frame_time)

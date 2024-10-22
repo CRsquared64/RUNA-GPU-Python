@@ -8,6 +8,7 @@ import numpy as np
 import os
 from PIL import Image, ImageTk
 from tqdm import tqdm
+import pickle
 
 width = 600
 height = 800
@@ -32,6 +33,7 @@ class RuneGUI:
         self.clicked = 0
 
         self.current_pos = None
+        self.current_vel = None
         self.pos_queue = queue
 
     def load_theme(self,theme):
@@ -59,7 +61,7 @@ class RuneGUI:
         adds all elements to screen
         :return:
         """
-        self.brun = Button(self.root, text="Run Simulation(s)", bg = self.button_col, fg=self.text_col, highlightbackground = self.hover_col, highlightthickness=0.1, command=self.get_settings)
+        self.brun = Button(self.root, text="Run Simulation(s)", bg = self.button_col, fg=self.text_col, highlightbackground = self.hover_col, highlightthickness=0.1, command=self.prepare_sims)
         self.brun.place(x =300,y = 775,anchor = tk.CENTER)
 
         self.clicked = tk.StringVar()
@@ -142,10 +144,10 @@ class RuneGUI:
 
     def add_queue(self):
         """
-        adds current_position to queue if it exists, queue data is 2d array of pos,name,n, g, dt
+        adds current_position to queue if it exists, queue data is 2d array of pos,name,n, g, dt ,vel
         """
         if self.current_pos is not None and self.get_settings() is not None:
-            self.pos_queue.enqueue([self.current_pos, self.clicked.get(), self.n_text.get(), self.g_text.get(), self.dt_text.get()])
+            self.pos_queue.enqueue([self.current_pos, self.clicked.get(), self.n_text.get(), self.g_text.get(), self.dt_text.get(), self.current_vel])
         else:
             messagebox.showerror("No Positions", "No positions loaded avalible to be queued")
     def remove_queue(self):
@@ -209,6 +211,7 @@ class RuneGUI:
         else:
             messagebox.showerror("WTF","how did you do that")
         self.current_pos = pos
+        self.current_vel = vel
         self.position_draw(pos)
 
 
@@ -245,6 +248,18 @@ class RuneGUI:
             self.image = tk.Label(self.root, image = image,bg= "black", highlightbackground=self.hover_col, highlightthickness=1)
             self.image.place(x=300,y=500,anchor=tk.CENTER)
         # (x * 150) + 150
+    def prepare_sims(self):
+        if self.pos_queue.is_empty():
+            pass
+        else:
+            i = 1
+            for sim in self.pos_queue.queue:
+                with open(f"cache/simulation_{i}.nbody", "wb") as file:
+                    pickle.dump(sim, file)
+                i+=1
+        self.root.quit()
+        self.root.destroy()
+
 
 
     def __call__(self, *args, **kwargs):
