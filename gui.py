@@ -35,6 +35,10 @@ class RuneGUI:
         self.pos_queue = queue
 
     def load_theme(self,theme):
+        """
+        :param theme: seperate file containg colours
+        :return:
+        """
         with open(f"themes/{theme}.theme", "r") as file:
             self.theme_data = eval(file.read())
         self.root["bg"] = self.theme_data[0]
@@ -51,6 +55,10 @@ class RuneGUI:
         label.config(text=clicked.get())
 
     def screen_setup(self):
+        """
+        adds all elements to screen
+        :return:
+        """
         self.brun = Button(self.root, text="Run Simulation(s)", bg = self.button_col, fg=self.text_col, highlightbackground = self.hover_col, highlightthickness=0.1, command=self.get_settings)
         self.brun.place(x =300,y = 775,anchor = tk.CENTER)
 
@@ -111,11 +119,15 @@ class RuneGUI:
         self.view_queue.place(x=300,y=250, anchor=tk.CENTER)
 
     def get_settings(self):
-        sim = self.clicked.get() if self.clicked.get() != "Select Simulation" else None
-        n = self.n_text.get() if self.n_text.get() != "" and self.float_val(self.n_text.get()) else None
-        dt = self.dt_text.get() if self.dt_text.get() != "" and self.float_val(self.dt_text.get()) else None
-        g = self.g_text.get() if self.g_text.get() != "" and self.float_val(self.g_text.get()) else None
-        softening = self.softing_text.get() if self.softing_text.get() != "" and self.float_val(self.softing_text.get()) else None
+        """
+        gets all the data needed for simulation to be ran, however may be obselete with queueu
+        :return:
+        """
+        sim = (self.clicked.get()) if self.clicked.get() != "Select Simulation" else None
+        n = int(self.n_text.get()) if self.n_text.get() != "" and (self.int_val(self.n_text.get())) else None
+        dt = float(self.dt_text.get()) if self.dt_text.get() != "" and (self.float_val(self.dt_text.get()) or self.int_val(self.dt_text.get())) else None
+        g = float(self.g_text.get()) if self.g_text.get() != "" and (self.float_val(self.g_text.get()) or self.int_val(self.g_text.get())) else None
+        softening = float(self.softing_text.get()) if self.softing_text.get() != "" and (self.float_val(self.softing_text.get()) or self.int_val(self.softing_text.get())) else None
         vals = [["sim", sim],["n", n],["dt",dt],["g",g],["softening", softening]]
         err = 0
         for val in vals:
@@ -124,15 +136,22 @@ class RuneGUI:
                 err += 1
         if err > 0:
             messagebox.showerror(title="Errors",message=f"{err} Errors detected, please fix and try again" )
+            return None
         else:
-            pass # send data off for simulation
+            return vals
 
     def add_queue(self):
-        if self.current_pos is not None:
-            self.pos_queue.enqueue([self.current_pos, self.clicked.get(), self.n_text.get()])
+        """
+        adds current_position to queue if it exists, queue data is 2d array of pos,name,n, g, dt
+        """
+        if self.current_pos is not None and self.get_settings() is not None:
+            self.pos_queue.enqueue([self.current_pos, self.clicked.get(), self.n_text.get(), self.g_text.get(), self.dt_text.get()])
         else:
             messagebox.showerror("No Positions", "No positions loaded avalible to be queued")
     def remove_queue(self):
+        """
+        checks if current position is in queue, and exists, then removes it using queue.dequeue
+        """
         print("Removing")
         if self.current_pos is not None and self.pos_queue.in_queue(self.current_pos):
             self.pos_queue.dequeue(self.current_pos)
@@ -140,6 +159,10 @@ class RuneGUI:
             messagebox.showerror("Error", "Select Positions Actually in queue")
 
     def show_and_select_queue(self):
+        """
+        gets dataa from the queue and displays it as seperate window,
+        then adjuts the current selected position as nessecary
+        """
         queue_data = self.pos_queue.return_full()
         print(queue_data)
         text = ""
@@ -147,12 +170,26 @@ class RuneGUI:
             text += f"{val[0]}: {val[1]}  [n={val[2]}]\n"
 
         get_queue_value = askinteger(title="Select Queue Item", prompt =text, minvalue=1, maxvalue=len(queue_data))
-        self.current_pos = self.pos_queue.queue[get_queue_value - 1][0]
+        if get_queue_value: # user may not input anything
+            self.current_pos = self.pos_queue.queue[get_queue_value - 1][0]
     def float_val(self, var):
-        return isinstance(var, float)
+        try:
+            var = float(var)
+            return True
+        except:
+            return False
+
+    def int_val(self, var):
+        try:
+            if int(var):
+                return True
+            else: return False
+        except:
+            return False
 
     def position_get(self):
         """
+            gets the details required for the inital positions to be generated
             "Square Random",
             "Square Uniform",
             "Circle"
@@ -176,6 +213,12 @@ class RuneGUI:
 
 
     def position_draw(self, pos):
+        """
+        Draws the inital positions using matplotlib, saves file to cache/figure.png
+
+        :param pos: np.array() of the starting x,y,z,padding of the simualation
+        :return: saves file at cache/figure.png
+        """
         x_arr = []
         y_arr = []
         fig = plt.figure(frameon=False,figsize=(3,3))
@@ -197,7 +240,7 @@ class RuneGUI:
         print("Generated Figure")
 
         if os.path.isfile("cache/figure.png"):
-            global image
+            global image # tkphoto needs this
             image = ImageTk.PhotoImage(Image.open("cache/figure.png"))
             self.image = tk.Label(self.root, image = image,bg= "black", highlightbackground=self.hover_col, highlightthickness=1)
             self.image.place(x=300,y=500,anchor=tk.CENTER)
