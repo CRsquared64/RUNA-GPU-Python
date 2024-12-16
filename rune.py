@@ -10,33 +10,44 @@ from pyrr import Matrix44
 WIDTH, HEIGHT = 1920, 1080
 
 
+
 class Runa(mglw.WindowConfig):
     resource_dir = "shaders"  # built in prefix, how neat is that??
     window_size = WIDTH, HEIGHT  # same with windows, so convienent
     gl_version = (4, 3)
     title = "N-Body Simulation"
 
-    def __init__(self, pos, vel, g, n, dt, rendered=False, max_frame_time=0, **kwargs):
+    pos = None
+    vel = None
+    g = None
+    dt = None
+    n = None
+
+    max_frame_time = None
+    rendered = False
+
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.ctx = moderngl.create_context()
 
         # simulation parameters
-        self.n = n  # number of bodies
-        self.dt = dt
-        self.g = g
+        self.n = Runa.n  # number of bodies
+        self.dt = Runa.dt
+        self.g = Runa.g
+
 
         self.render_factor_w = 2  # aspect ratio simplified
         self.render_factor_h = 9 / 8
 
-        self.rendered = rendered
+        self.rendered = Runa.rendered
 
         self.compute_shader = self.load_compute_shader("soft_compute_shader.glsl")
 
         self.position_data = np.zeros((self.n, 4), dtype=np.float32)
         self.velocity_data = np.zeros((self.n, 4), dtype=np.float32)
         # options are square, circle
-        self.position_data[:] = pos
-        self.velocity_data[:] = vel
+        self.position_data[:] = Runa.pos
+        self.velocity_data[:] = Runa.vel
 
         self.position_buffer = self.ctx.buffer(self.position_data.tobytes())
         self.velocity_buffer = self.ctx.buffer(self.velocity_data.tobytes())
@@ -66,12 +77,12 @@ class Runa(mglw.WindowConfig):
 
         self.cache_dir = "cache"
         os.makedirs(self.cache_dir, exist_ok=True)  # Create cache dir if it doesn't exist
-        if rendered:
+        if Runa.rendered:
             self.frame_count = 0  # To track frame numbers
 
             # Track time to close after 30 seconds
             self.total_time = 0
-            self.max_time = max_frame_time  # seconds
+            self.max_time = Runa.max_frame_time  # seconds
 
         else:
             pass
@@ -147,5 +158,15 @@ class Runa(mglw.WindowConfig):
             self.realtime_render(time, frame_time)
 
 
+def run(pos, vel, g, n, dt):
+    Runa.pos = np.array(pos)
+    Runa.vel = np.array(vel)
+    Runa.g = float(g)
+    Runa.n = int(n)
+    Runa.dt = float(dt)
+
+    Runa.max_frame_time = 0
+
+    mglw.run_window_config(Runa)
 if __name__ == '__main__':
     mglw.run_window_config(Runa)
