@@ -1,7 +1,7 @@
 import os
 import gui
 import simulations
-import moderngl_window as mglw
+# import moderngl_window as mglw
 import rune
 import queue
 import pickle
@@ -16,5 +16,6 @@ for filename in os.listdir("cache/"):
         with open(f"cache/{filename}", "rb") as file:
             sim_data = pickle.load(file)
             pos, name, n, g, dt, vel = sim_data
-            sim = rune.Runa(pos,vel,g,dt)
+            mglw = rune.return_mglw()
+            sim = rune.Runa(pos,vel,g,n,dt)
             mglw.run_window_config(sim)

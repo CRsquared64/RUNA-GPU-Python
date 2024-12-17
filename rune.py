@@ -1,15 +1,15 @@
 import os
 import sys
-
+import moderngl_window as mglw
 import cv2
 import moderngl
-import moderngl_window as mglw
 import numpy as np
 from pyrr import Matrix44
 
 WIDTH, HEIGHT = 1920, 1080
 
-
+def return_mglw():
+    return mglw
 class Runa(mglw.WindowConfig):
     resource_dir = "shaders"  # built in prefix, how neat is that??
     window_size = WIDTH, HEIGHT  # same with windows, so convienent
@@ -121,7 +121,7 @@ class Runa(mglw.WindowConfig):
 
         video_filename = "nbody_simulation.avi"
         fourcc = cv2.VideoWriter_fourcc(*'FFV1')  #
-        video = cv2.VideoWriter(video_filename, fourcc, 30.0, (WIDTH, HEIGHT))
+        video = cv2.VideoWriter(video_filename, fourcc, 60.0, (WIDTH, HEIGHT))
 
         # Read all frame files and write them to the video
         for i in range(self.frame_count):
@@ -147,5 +147,3 @@ class Runa(mglw.WindowConfig):
             self.realtime_render(time, frame_time)
 
 
-if __name__ == '__main__':
-    mglw.run_window_config(Runa)
