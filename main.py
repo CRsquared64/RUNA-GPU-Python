@@ -1,7 +1,6 @@
 import os
 import gui
 import simulations
-# import moderngl_window as mglw
 import rune
 import queue
 import pickle
@@ -10,7 +9,6 @@ import pygame
 
 import QuadTree.quadTree as quadTree
 import QuadTree.traverseGraph as traverse
-
 
 WIDTH, HEIGHT = 600, 800
 position_queue = queue.Queue()
@@ -23,9 +21,7 @@ for filename in os.listdir("cache/"):
             sim_data = pickle.load(file)
             pos, name, n, g, dt, vel, isPython = sim_data
             if isPython == 0:
-                mglw = rune.return_mglw()
-                sim = rune.Runa(pos,vel,g,n,dt)
-                mglw.run_window_config(sim)
+                rune.run(pos,vel, g, n, dt)
             elif isPython == True:
                 pygame.init()
                 pygame.display.set_caption("Nbody 2")
