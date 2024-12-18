@@ -9,7 +9,20 @@
 -----------------
 '''
 import math
+import numpy as np
 
+def np_to_body(pos, vel, G, dt):
+    pos = pos.tolist()
+    vel = vel.tolist()
+    bodies = []
+    for i in range(pos):
+        bdy = Body(pos[i][0], pos[i][1])
+        bdy.G = G
+        bdy.dt = dt
+        bdy.xv = (vel[i][0])
+        bdy.yv = vel[i][1]
+        bodies.append(bdy)
+    return bodies
 
 class Body:
     G = 0.6
