@@ -26,7 +26,11 @@ class RuneGUI:
         self.options = [
             "Square Random",
             "Square Uniform",
-            "Circle"
+            "Circle",
+            "Square Rotate",
+            "Spiral",
+            "System",
+            "Galaxy Collision"
 
 
         ]
@@ -208,6 +212,14 @@ class RuneGUI:
             pos, vel = simulations.uniform_square(n)
         elif sim == "Circle":
             pos,vel = simulations.circle(n)
+        elif sim =="Square Rotate":
+            pos, vel = simulations.square_rotate(n)
+        elif sim == "Spiral":
+            pos, vel = simulations.spiral(n)
+        elif sim == "System":
+            pos,vel = simulations.system(n)
+        elif sim == "Galaxy Collision":
+            pos, vel = simulations.galaxy_collision(n)
         else:
             messagebox.showerror("WTF","how did you do that")
         self.current_pos = pos
