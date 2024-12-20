@@ -1,7 +1,6 @@
 import math
 import os
 
-import quadTree
 import random
 import pygame
 from tqdm import tqdm
@@ -18,6 +17,7 @@ screen = pygame.display.set_mode((window_x,window_y))
 rendered = False
 frames = 500
 
+
 def golden_ratio():
     sped_factor = 0.07
     steps = 5000
@@ -26,11 +26,11 @@ def golden_ratio():
     center_y = window_y // 2
     center_x = window_x // 2
     scale = 0.3
-    bodies.append(quadTree.Body(center_x,center_y,mass=10000))
+    bodies.append(quadTree.Body(center_x, center_y, mass=10000))
     for i in range(50,steps,step_size):
         y = window_y // 2 - int(i * math.sin(i)) * scale
         x = window_x // 2 - int(i * math.cos(i)) * scale
-        body = quadTree.Body(x,y)
+        body = quadTree.Body(x, y)
         #AB = OB - OA
         AB_Y = center_x - x
         AB_x = center_y - y
@@ -43,13 +43,13 @@ def golden_ratio():
 
 def random_bodies():
     n = 10
-    bodies = [quadTree.Body(random.randint(1,window_x),random.randint(1,1080)) for _ in range(n)]
-    b_hole = quadTree.Body(size / 2, size / 2,mass=10)
+    bodies = [quadTree.Body(random.randint(1, window_x), random.randint(1, 1080)) for _ in range(n)]
+    b_hole = quadTree.Body(size / 2, size / 2, mass=10)
     return bodies
 
 def random_bodies_rotate():
     n = 256
-    bodies = [quadTree.Body(random.randint(1,size),random.randint(1,size)) for _ in range(n)]
+    bodies = [quadTree.Body(random.randint(1, size), random.randint(1, size)) for _ in range(n)]
     for body in bodies:
         body.dt = 0.1
         body.xv = random.uniform(-0.1,0.1)
@@ -60,14 +60,14 @@ def uniform_bodies(n):
     bodies = []
     for i in range(0,window_x + (window_x // n),(window_x//n + 1)):
         for j in range(0,window_y + 2 * (window_y // n),(window_y//n)):
-            bodies.append(quadTree.Body(i,j))
+            bodies.append(quadTree.Body(i, j))
     return bodies
 
 
 
 def moon_system():
     planet = quadTree.Body(size / 2, size / 2, mass=81)
-    moon = quadTree.Body(size / 4, size /2)
+    moon = quadTree.Body(size / 4, size / 2)
     moon.yv = 0.4
     moon.dt = 10
     planet.dt =10
@@ -75,7 +75,7 @@ def moon_system():
     return [planet,moon]
 
 def three_body():
-    return [quadTree.Body(size / 2, size / 3), quadTree.Body(size /2, size / 2), quadTree.Body(size / 2, 2 * size / 3)]
+    return [quadTree.Body(size / 2, size / 3), quadTree.Body(size / 2, size / 2), quadTree.Body(size / 2, 2 * size / 3)]
 
 
 def uniform_bodies_circle(center_x, center_y, radius, n):
@@ -171,7 +171,7 @@ def render_from_dir(dir):
 
 def click_spawn(bodies):
     x,y, = pygame.mouse.get_pos()
-    bodies.append(quadTree.Body(x ,y))
+    bodies.append(quadTree.Body(x, y))
     #bodies[-1].xv = random.uniform(-0.1,0.1)
     #bodies[-1].yv = random.uniform(-0.1, 0.1)
     print(x,y)
@@ -179,7 +179,7 @@ def click_spawn(bodies):
 
 
 def render_frame(bodies):
-    area = quadTree.Area(-window_x , -window_y , window_x  , window_y)
+    area = quadTree.Area(-window_x, -window_y, window_x, window_y)
     tree = quadTree.QuadTree(area)
     for body in bodies:
         if tree.check_in_range(body):

@@ -96,10 +96,10 @@ class RuneGUI:
         self.g_text = tk.Entry(self.root, bg=self.button_col)
         self.g_text.place(x=300, y=125, anchor=tk.CENTER, width=150, height=25)
 
-        self.soft_lable = tk.Label(self.root, text="Softening Value (Default 0): ", fg=self.text_col, bg=self.button_col)
-        self.soft_lable.place(x=130, y=175, anchor=tk.CENTER)
+        self.soft_lable = tk.Label(self.root, text="Use CPU (Quadtree ): ", fg=self.text_col, bg=self.button_col)
+        self.soft_lable.place(x=145, y=175, anchor=tk.CENTER)
 
-        self.softing_text = tk.Entry(self.root, bg=self.button_col)
+        self.softing_text = tk.Checkbutton(self.root)
         self.softing_text.place(x=300, y=175, anchor=tk.CENTER, width=150, height=25)
 
         self.bgen = Button(self.root, text="Generate Positions", bg=self.button_col, fg=self.text_col,
@@ -151,7 +151,7 @@ class RuneGUI:
         adds current_position to queue if it exists, queue data is 2d array of pos,name,n, g, dt ,vel
         """
         if self.current_pos is not None and self.get_settings() is not None:
-            self.pos_queue.enqueue([self.current_pos, self.clicked.get(), self.n_text.get(), self.g_text.get(), self.dt_text.get(), self.current_vel])
+            self.pos_queue.enqueue([self.current_pos, self.clicked.get(), self.n_text.get(), self.g_text.get(), self.dt_text.get(), self.current_vel, self.softing_text.get()])
         else:
             messagebox.showerror("No Positions", "No positions loaded avalible to be queued")
     def remove_queue(self):
