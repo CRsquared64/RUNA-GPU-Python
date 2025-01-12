@@ -4,7 +4,7 @@ import os
 import random
 import pygame
 from tqdm import tqdm
-
+import QuadTree.quadTree as quadTree
 pygame.init()
 pygame.display.set_caption("Nbody 2")
 clock = pygame.time.Clock()

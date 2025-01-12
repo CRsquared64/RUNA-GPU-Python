@@ -8,7 +8,7 @@ import pickle
 import pygame
 
 import QuadTree.quadTree as quadTree
-import QuadTree.traverseGraph as traverse
+
 
 WIDTH, HEIGHT = 600, 800
 position_queue = queue.Queue()
@@ -20,9 +20,11 @@ for filename in os.listdir("cache/"):
         with open(f"cache/{filename}", "rb") as file:
             sim_data = pickle.load(file)
             pos, name, n, g, dt, vel, isPython = sim_data
+            print(isPython)
             if isPython == 0:
                 rune.run(pos,vel, g, n, dt)
             elif isPython == True:
+                import QuadTree.traverseGraph as traverse
                 pygame.init()
                 pygame.display.set_caption("Nbody 2")
                 clock = pygame.time.Clock()
@@ -31,7 +33,7 @@ for filename in os.listdir("cache/"):
                 window_x = 800
                 window_y = 800
                 screen = pygame.display.set_mode((window_x, window_y))
-                bodies = quadTree.np_to_body(pos, vel, g, dt)
+                bodies = quadTree.np_to_body(pos, vel, float(g), float(dt))
                 while True:
                     screen.fill((10,10,10))
                     for event in pygame.event.get():

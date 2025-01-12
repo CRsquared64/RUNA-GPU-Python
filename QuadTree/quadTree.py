@@ -12,15 +12,17 @@ import math
 import numpy as np
 
 def np_to_body(pos, vel, G, dt):
-    pos = pos.tolist()
-    vel = vel.tolist()
+    if pos is np.ndarray:
+        pos = pos.tolist()
+    if vel is np.ndarray:
+        vel = vel.tolist()
     bodies = []
-    for i in range(pos):
-        bdy = Body(pos[i][0], pos[i][1])
+    for i in range(len(pos)):
+        bdy = Body(pos[i][0] * 800, pos[i][1] * 800)
         bdy.G = G
         bdy.dt = dt
-        bdy.xv = (vel[i][0])
-        bdy.yv = vel[i][1]
+        bdy.xv = (vel[i][0] * 800)
+        bdy.yv = vel[i][1] * 800
         bodies.append(bdy)
     return bodies
 
@@ -50,7 +52,7 @@ class Body:
         obj_dist_y = obj_y - body.y
 
         dist = math.sqrt(obj_dist_x ** 2 + obj_dist_y ** 2)
-        force = (body.G * body.mass * obj.mass) / dist ** 2
+        force = (float(body.G) * body.mass * obj.mass) / dist ** 2
 
         angle = math.atan2(obj_dist_y, obj_dist_x)
 

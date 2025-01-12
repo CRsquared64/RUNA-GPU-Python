@@ -1,3 +1,4 @@
+import tkinter
 import tkinter as tk
 from tkmacosx import Button# macos getaround for colours
 from tkinter import messagebox
@@ -72,7 +73,7 @@ class RuneGUI:
         self.clicked.set("Select Simulation")
 
         self.dropdown = tk.OptionMenu(self.root, self.clicked,*self.options)
-        self.dropdown.configure(background=self.button_col, activebackground=self.button_col)
+        self.dropdown.configure(background=self.button_col, fg=self.text_col, activebackground=self.button_col)
         self.dropdown.place(x =300,y = 25,anchor = tk.CENTER)
 
         self.simulation_label = tk.Label(self.root, text="Selected Simulation: ", fg = self.text_col, bg =self.button_col)
@@ -99,7 +100,8 @@ class RuneGUI:
         self.soft_lable = tk.Label(self.root, text="Use CPU (Quadtree ): ", fg=self.text_col, bg=self.button_col)
         self.soft_lable.place(x=145, y=175, anchor=tk.CENTER)
 
-        self.softing_text = tk.Checkbutton(self.root)
+        self.check_var = tk.IntVar()
+        self.softing_text = tk.Checkbutton(self.root, background=self.theme_data[0], variable=self.check_var)
         self.softing_text.place(x=300, y=175, anchor=tk.CENTER, width=150, height=25)
 
         self.bgen = Button(self.root, text="Generate Positions", bg=self.button_col, fg=self.text_col,
@@ -133,7 +135,7 @@ class RuneGUI:
         n = int(self.n_text.get()) if self.n_text.get() != "" and (self.int_val(self.n_text.get())) else None
         dt = float(self.dt_text.get()) if self.dt_text.get() != "" and (self.float_val(self.dt_text.get()) or self.int_val(self.dt_text.get())) else None
         g = float(self.g_text.get()) if self.g_text.get() != "" and (self.float_val(self.g_text.get()) or self.int_val(self.g_text.get())) else None
-        softening = float(self.softing_text.get()) if self.softing_text.get() != "" and (self.float_val(self.softing_text.get()) or self.int_val(self.softing_text.get())) else None
+        softening = float(self.check_var.get()) if self.check_var.get() != "" and (self.float_val(self.check_var.get()) or self.int_val(self.check_var.get())) else None
         vals = [["sim", sim],["n", n],["dt",dt],["g",g],["softening", softening]]
         err = 0
         for val in vals:
@@ -151,7 +153,7 @@ class RuneGUI:
         adds current_position to queue if it exists, queue data is 2d array of pos,name,n, g, dt ,vel
         """
         if self.current_pos is not None and self.get_settings() is not None:
-            self.pos_queue.enqueue([self.current_pos, self.clicked.get(), self.n_text.get(), self.g_text.get(), self.dt_text.get(), self.current_vel, self.softing_text.get()])
+            self.pos_queue.enqueue([self.current_pos, self.clicked.get(), self.n_text.get(), self.g_text.get(), self.dt_text.get(), self.current_vel, self.check_var.get()])
         else:
             messagebox.showerror("No Positions", "No positions loaded avalible to be queued")
     def remove_queue(self):
